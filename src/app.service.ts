@@ -10,7 +10,7 @@ export class AppService {
         const selectQuery = {
           name: 'select-remaining',
           text: `
-            select count(*) from public.adds_mint_hashes where checked = true
+            select count(*) from public.adds_mint_hashes
             `,
         }
         var res = await pool.query(selectQuery).catch((e: any) => {
