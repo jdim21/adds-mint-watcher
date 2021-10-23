@@ -8,13 +8,14 @@ import { strict } from 'assert/strict';
 import { mintList } from './mintList';
 import { mintAndMetaList } from './mintAndMetaList';
 import axios, { AxiosResponse } from 'axios';
+import * as https from 'https';
 
 const checkMintsIntervalTime = 2000;
 const signaturesIntervalTime = 3000;
 const checkValidSales = 2000;
 const saleSignaturesIntervalTime = 5000;
-const microLunaExpected = 1000;
-const mintRecvAddress = 'terra1nskc8gfppphsllgj0gv680ea7aajpx8egas54d';
+const microLunaExpected = 3000000;
+const mintRecvAddress = 'terra1nu0uhpulrm2xalwg33cwtegcdg467cjydzvcht';
 
 // async function uploadMintAndImageUris() {
 //   pool.connect().then(async (client) => {
@@ -79,10 +80,20 @@ function looksLikeMint(tx) {
 }
 
 async function getLatestSignatures() {
+  console.log("getting latest sigs..");
   pool.connect().then(async (client) => {
-    let url = "https://fcd.terra.dev/v1/txs?offset=0&limit=100&account=terra1nskc8gfppphsllgj0gv680ea7aajpx8egas54d";
-    let result = await axios.get(url).then(async data => {
-        // console.log('Request received!');
+    var headers = {
+      'Cache-Control': 'no-cache',
+      // 'Pragma': 'no-cache',
+      // 'Expires': '0',
+      // 'CF-Cache-Status': 'EXPIRED',
+      'Postman-Token': Date.now(),
+      'Cookie': '__cfruid=cfab290b763d43e9907acc92c213d6121bdce7fc-1634768660',
+    };
+    let txurl = "https://fcd.terra.dev/v1/txs?offset=0&limit=100&account=" + mintRecvAddress;
+    // var config = {url: txurl, headers: {'Content-Type': 'application/json','Cache-Control' : 'no-cache'}};
+    let result = await axios.get(txurl, {headers:{'Cache-Control': "no-cache, no-store, must-revalidate", 'Connection': "keep-alive"}}).then(async data => {
+        console.log('Request received!');
         // console.log(data);
         if (data && data.data && data.data.txs) {
           for (let i = 0; i < data.data.txs.length; i++) {
@@ -125,6 +136,7 @@ async function getLatestSignatures() {
             }
           }
         }
+        client.release();
     })
     .catch(err => console.log(err))
     // console.log("result: " + JSON.stringify(result));
@@ -451,11 +463,7 @@ async function getLatestSignatures() {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  setInterval(getLatestSignatures, signaturesIntervalTime);
-  // setInterval(checkForMints, checkMintsIntervalTime);
-  // uploadMintAndImageUris();
-  // setInterval(getLatestSaleSignatures, saleSignaturesIntervalTime);
-  // setInterval(checkForValidSales, checkValidSales);
+  // setInterval(getLatestSignatures, signaturesIntervalTime);
   app.enableCors();
   await app.listen(3000);
 }
